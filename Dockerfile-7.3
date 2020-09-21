@@ -4,7 +4,8 @@
 #--------------------------------------------------------------------------
 #
 
-FROM phusion/baseimage
+ARG IMAGE_VERSION=amd64
+FROM phusion/baseimage:latest-${IMAGE_VERSION}
 
 LABEL maintainer="Mahmoud Zalt <mahmoud@zalt.me>"
 
