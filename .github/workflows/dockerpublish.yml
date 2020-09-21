@@ -1,32 +1,51 @@
 name: Docker Image CI
 
 on:
-  push:
-    branches: master
-  schedule:
-  - cron: 0 0 * * 6
+    push:
+        tags:
+            - v*
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php_version: [56, 70, 71, 72, 73, 74]
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build the Docker image
-      env:
-        PHP_VERSION: ${{ matrix.php_version }}
-      run: |
-        export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
-        docker build . --file Dockerfile-${{ matrix.php_version }} --tag laradock/workspace:latest-${TAG_VERSION}
-        docker image ls
-    - name: Push image to Docker hub
-      if: success()
-      env:
-        PHP_VERSION: ${{ matrix.php_version }}
-      run: |
-        export TAG_VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
-        echo ${{ secrets.DOCKER_HUB_PASSWORD }} | docker login -u ${{ secrets.DOCKER_HUB_USER }} --password-stdin
-        docker push laradock/workspace:latest-${TAG_VERSION}
-        docker logout
+    buildx:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                php_version: [ 7.3, 7.4 ]
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v2
+            -   name: Prepare
+                id: prepare
+                env:
+                    PHP_VERSION: ${{ matrix.php_version }}
+                run: |
+                    DOCKER_IMAGE=helldar/laradock-workspace
+                    DOCKER_PLATFORMS=linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+                    TAGS="--tag ${DOCKER_IMAGE}:latest-${PHP_VERSION}"
+
+                    echo ::set-output name=docker_image::${DOCKER_IMAGE}
+                    echo ::set-output name=version::${PHP_VERSION}
+                    echo ::set-output name=buildx_args::--platform ${DOCKER_PLATFORMS} \
+                        --build-arg VERSION=${PHP_VERSION} \
+                        --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+                        --build-arg VCS_REF=${GITHUB_SHA::8} \
+                        ${TAGS} --file ./Dockerfile-${PHP_VERSION} ./
+            -   name: Set up Docker Buildx
+                uses: crazy-max/ghaction-docker-buildx@v3.3.0
+            -   name: Docker Buildx (build)
+                run: |
+                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args }}
+            -   name: Login to DockerHub
+                if: success()
+                uses: docker/login-action@v1
+                with:
+                    username: ${{ secrets.DOCKER_HUB_USER }}
+                    password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+            -   name: Docker Buildx (push)
+                if: success()
+                run: |
+                    docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
+            -   name: Inspect image
+                if: always()
+                run: |
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
