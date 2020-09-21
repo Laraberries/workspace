@@ -51,15 +51,15 @@ jobs:
                 uses: crazy-max/ghaction-docker-buildx@v3.3.0
             -   name: Docker Build (latest)
                 run: |
-                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_latest }}
+                    docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.version_latest }}" ${{ steps.prepare.outputs.buildx_args_latest }}
             -   name: Docker Build (major)
                 if: success()
                 run: |
-                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_major }}
+                    docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.version_major }}" ${{ steps.prepare.outputs.buildx_args_major }}
             -   name: Docker Build (minor)
                 if: success()
                 run: |
-                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_minor }}
+                    docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.version_minor }}" ${{ steps.prepare.outputs.buildx_args_minor }}
             -   name: Login to DockerHub
                 if: success()
                 uses: docker/login-action@v1
@@ -69,9 +69,9 @@ jobs:
             -   name: Docker Buildx (push)
                 if: success()
                 run: |
-                    docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args_latest }}
-                    docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args_major }}
-                    docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args_minor }}
+                    docker buildx build --output "type=image,push=true,name=${{ steps.prepare.outputs.version_latest }}" ${{ steps.prepare.outputs.buildx_args_latest }}
+                    docker buildx build --output "type=image,push=true,name=${{ steps.prepare.outputs.version_major }}" ${{ steps.prepare.outputs.buildx_args_major }}
+                    docker buildx build --output "type=image,push=true,name=${{ steps.prepare.outputs.version_minor }}" ${{ steps.prepare.outputs.buildx_args_minor }}
             -   name: Inspect image
                 if: success()
                 run: |
