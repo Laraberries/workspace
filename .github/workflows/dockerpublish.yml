@@ -9,7 +9,7 @@ jobs:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php_version: [ 7.3.22, 7.4.10 ]
+                php_version: [ 7.4.10 ]
         steps:
             -   name: Checkout
                 uses: actions/checkout@v2
@@ -34,24 +34,18 @@ jobs:
                         --build-arg PHP_VERSION=${VERSION_LATEST} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        --cache-from="type=registry,ref=${VERSION_LATEST}-${GITHUB_SHA::8}" \
-                        --cache-to=="type=registry,ref=${VERSION_LATEST}-${GITHUB_SHA::8}" \
                         --tag ${DOCKER_IMAGE}:latest-${VERSION_LATEST} --file ./Dockerfile .
                     echo ::set-output name=buildx_args_major::--platform ${DOCKER_PLATFORMS} \
                         --build-arg VERSION=${VERSION_MAJOR} \
                         --build-arg PHP_VERSION=${VERSION_MAJOR} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        --cache-from="type=registry,ref=${VERSION_MAJOR}-${GITHUB_SHA::8}" \
-                        --cache-to=="type=registry,ref=${VERSION_MAJOR}-${GITHUB_SHA::8}" \
                         --tag ${DOCKER_IMAGE}:${VERSION_MAJOR} --file ./Dockerfile .
                     echo ::set-output name=buildx_args_minor::--platform ${DOCKER_PLATFORMS} \
                         --build-arg VERSION=${VERSION_MINOR} \
                         --build-arg PHP_VERSION=${VERSION_MINOR} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        --cache-from="type=registry,ref=${VERSION_MINOR}-${GITHUB_SHA::8}" \
-                        --cache-to=="type=registry,ref=${VERSION_MINOR}-${GITHUB_SHA::8}" \
                         --tag ${DOCKER_IMAGE}:${VERSION_MINOR} --file ./Dockerfile .
             -   name: Set up Docker Buildx
                 uses: crazy-max/ghaction-docker-buildx@v3.3.0
