@@ -5,11 +5,11 @@ on:
         branches: helldar
 
 jobs:
-    buildx:
+    build:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php_version: [ 7.4.10 ]
+                php_version: [ 7.2.33, 7.3.22, 7.4.10 ]
         steps:
             -   name: Checkout
                 uses: actions/checkout@v2
@@ -48,17 +48,11 @@ jobs:
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
                         --tag "${DOCKER_IMAGE}:${VERSION_MINOR}" .
             -   name: Set up Docker Buildx
-                uses: crazy-max/ghaction-docker-buildx@v3.3.0
-            -   name: Docker Build (latest)
+                uses: crazy-max/ghaction-docker-buildx@v3
+            -   name: Docker Buildx (build)
                 run: |
                     docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.version_latest }}" ${{ steps.prepare.outputs.buildx_args_latest }}
-            -   name: Docker Build (major)
-                if: success()
-                run: |
                     docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.version_major }}" ${{ steps.prepare.outputs.buildx_args_major }}
-            -   name: Docker Build (minor)
-                if: success()
-                run: |
                     docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.version_minor }}" ${{ steps.prepare.outputs.buildx_args_minor }}
             -   name: Login to DockerHub
                 if: success()
