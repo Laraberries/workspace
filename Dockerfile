@@ -4,11 +4,11 @@
 #--------------------------------------------------------------------------
 #
 
-ARG PHP_VERSION=7.4
-
-FROM phusion/baseimage:18.04-1.0.0
+FROM phusion/baseimage:bionic-1.0.0
 
 LABEL maintainer="Mahmoud Zalt <mahmoud@zalt.me>"
+
+ARG PHP_VERSION=7.4
 
 RUN DEBIAN_FRONTEND=noninteractive
 RUN locale-gen en_US.UTF-8
