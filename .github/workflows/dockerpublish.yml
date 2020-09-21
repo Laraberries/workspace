@@ -49,10 +49,16 @@ jobs:
                         "--tag ${DOCKER_IMAGE}:${VERSION_MINOR}" --file ./Dockerfile .
             -   name: Set up Docker Buildx
                 uses: crazy-max/ghaction-docker-buildx@v3.3.0
-            -   name: Docker Buildx (build)
+            -   name: Docker Build (latest)
                 run: |
                     docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_latest }}
+            -   name: Docker Build (major)
+                if: success()
+                run: |
                     docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_major }}
+            -   name: Docker Build (minor)
+                if: success()
+                run: |
                     docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_minor }}
             -   name: Login to DockerHub
                 if: success()
