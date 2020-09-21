@@ -3,15 +3,13 @@ name: Docker Image CI
 on:
     push:
         branches: helldar
-    schedule:
-        -   cron: 0 0 * * 6
 
 jobs:
     buildx:
         runs-on: ubuntu-latest
         strategy:
             matrix:
-                php_version: [ 7.3, 7.4 ]
+                php_version: [ 7.3.22, 7.4.10 ]
         steps:
             -   name: Checkout
                 uses: actions/checkout@v2
@@ -22,26 +20,40 @@ jobs:
                 run: |
                     DOCKER_IMAGE=helldar/laradock-workspace
                     DOCKER_PLATFORMS=linux/amd64,linux/arm,linux/arm64
-                    VERSION=latest-${PHP_VERSION}
-
-                    if [ "${{ github.event_name }}" = "schedule" ]; then
-                        VERSION=nightly-${PHP_VERSION}
-                    fi
+                    VERSION_LATEST=${PHP_VERSION:0:1}.${PHP_VERSION:2:1}
+                    VERSION_MAJOR=${PHP_VERSION:0:1}.${PHP_VERSION:2:1}
+                    VERSION_MINOR=${PHP_VERSION}
                     
-                    TAGS="--tag ${DOCKER_IMAGE}:${VERSION}"
-
                     echo ::set-output name=docker_image::${DOCKER_IMAGE}
-                    echo ::set-output name=version::${VERSION}
-                    echo ::set-output name=buildx_args::--platform ${DOCKER_PLATFORMS} \
-                        --build-arg VERSION=${VERSION} \
+                    echo ::set-output name=version_latest::${VERSION_LATEST}
+                    echo ::set-output name=version_major::${VERSION_MAJOR}
+                    echo ::set-output name=version_minor::${VERSION_MINOR}
+                    
+                    echo ::set-output name=buildx_args_latest::--platform ${DOCKER_PLATFORMS} \
+                        --build-arg VERSION=latest-${VERSION_LATEST} \
+                        --build-arg PHP_VERSION=${VERSION_LATEST} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        ${TAGS} --file ./Dockerfile-${PHP_VERSION} .
+                        "--tag ${DOCKER_IMAGE}:latest-${VERSION_LATEST}" --file ./Dockerfile .
+                    echo ::set-output name=buildx_args_major::--platform ${DOCKER_PLATFORMS} \
+                        --build-arg VERSION=${VERSION_MAJOR} \
+                        --build-arg PHP_VERSION=${VERSION_MAJOR} \
+                        --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+                        --build-arg VCS_REF=${GITHUB_SHA::8} \
+                        "--tag ${DOCKER_IMAGE}:${VERSION_MAJOR}" --file ./Dockerfile .
+                    echo ::set-output name=buildx_args_minor::--platform ${DOCKER_PLATFORMS} \
+                        --build-arg VERSION=${VERSION_MINOR} \
+                        --build-arg PHP_VERSION=${VERSION_MINOR} \
+                        --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+                        --build-arg VCS_REF=${GITHUB_SHA::8} \
+                        "--tag ${DOCKER_IMAGE}:${VERSION_MINOR}" --file ./Dockerfile .
             -   name: Set up Docker Buildx
                 uses: crazy-max/ghaction-docker-buildx@v3.3.0
             -   name: Docker Buildx (build)
                 run: |
-                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args }}
+                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_latest }}
+                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_major }}
+                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_minor }}
             -   name: Login to DockerHub
                 if: success()
                 uses: docker/login-action@v1
@@ -51,8 +63,12 @@ jobs:
             -   name: Docker Buildx (push)
                 if: success()
                 run: |
-                    docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args }}
+                    docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args_latest }}
+                    docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args_major }}
+                    docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args_minor }}
             -   name: Inspect image
                 if: always()
                 run: |
-                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version_latest }}
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version_major }}
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version_minor }}

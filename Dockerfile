@@ -4,6 +4,8 @@
 #--------------------------------------------------------------------------
 #
 
+ARG PHP_VERSION=7.4
+
 FROM phusion/baseimage:bionic-1.0.0
 
 LABEL maintainer="Mahmoud Zalt <mahmoud@zalt.me>"
@@ -34,22 +36,22 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --allow-downgrades --allow-remove-essential \
         --allow-change-held-packages \
-        php7.3-cli \
-        php7.3-common \
-        php7.3-curl \
-        php7.3-intl \
-        php7.3-json \
-        php7.3-xml \
-        php7.3-mbstring \
-        php7.3-mysql \
-        php7.3-pgsql \
-        php7.3-sqlite \
-        php7.3-sqlite3 \
-        php7.3-zip \
-        php7.3-bcmath \
-        php7.3-memcached \
-        php7.3-gd \
-        php7.3-dev \
+        php${PHP_VERSION}-cli \
+        php${PHP_VERSION}-common \
+        php${PHP_VERSION}-curl \
+        php${PHP_VERSION}-intl \
+        php${PHP_VERSION}-json \
+        php${PHP_VERSION}-xml \
+        php${PHP_VERSION}-mbstring \
+        php${PHP_VERSION}-mysql \
+        php${PHP_VERSION}-pgsql \
+        php${PHP_VERSION}-sqlite \
+        php${PHP_VERSION}-sqlite3 \
+        php${PHP_VERSION}-zip \
+        php${PHP_VERSION}-bcmath \
+        php${PHP_VERSION}-memcached \
+        php${PHP_VERSION}-gd \
+        php${PHP_VERSION}-dev \
         pkg-config \
         libcurl4-openssl-dev \
         libedit-dev \
