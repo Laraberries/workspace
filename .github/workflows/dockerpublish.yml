@@ -67,7 +67,7 @@ jobs:
                     docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args_major }}
                     docker buildx build --output "type=image,push=true" ${{ steps.prepare.outputs.buildx_args_minor }}
             -   name: Inspect image
-                if: always()
+                if: success()
                 run: |
                     docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version_latest }}
                     docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version_major }}
