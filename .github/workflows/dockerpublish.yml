@@ -19,22 +19,28 @@ jobs:
                     PHP_VERSION: ${{ matrix.php_version }}
                 run: |
                     DOCKER_IMAGE=helldar/laradock-workspace
-                    DOCKER_PLATFORMS=linux/amd64,linux/arm/v7,linux/arm/v8,linux/arm64
-                    VERSION=latest-${PHP_VERSION}
-                    TAGS="--tag ${DOCKER_IMAGE}:${VERSION}"
+                    DOCKER_PLATFORMS=linux/amd64,linux/arm,linux/arm64
+                    VERSION_LATEST=latest-${PHP_VERSION:0:1}.${PHP_VERSION:1:1}
+                    VERSION_MINOR=${PHP_VERSION}
 
                     echo ::set-output name=docker_image::${DOCKER_IMAGE}
-                    echo ::set-output name=version::${VERSION}
-                    echo ::set-output name=buildx_args::--platform ${DOCKER_PLATFORMS} \
-                        --build-arg VERSION=${VERSION} \
+                    echo ::set-output name=version::${PHP_VERSION}
+                    echo ::set-output name=buildx_args_latest::--platform ${DOCKER_PLATFORMS} \
+                        --build-arg VERSION=${VERSION_LATEST} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        ${TAGS} --file ./Dockerfile-${PHP_VERSION} ./
+                        --tag ${DOCKER_IMAGE}:${VERSION_LATEST} --file ./Dockerfile-${VERSION_MINOR} ./
+                    echo ::set-output name=buildx_args_minor::--platform ${DOCKER_PLATFORMS} \
+                        --build-arg VERSION=${VERSION_MINOR} \
+                        --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
+                        --build-arg VCS_REF=${GITHUB_SHA::8} \
+                        --tag ${DOCKER_IMAGE}:${VERSION_MINOR} --file ./Dockerfile-${VERSION_MINOR} ./
             -   name: Set up Docker Buildx
                 uses: crazy-max/ghaction-docker-buildx@v3.3.0
             -   name: Docker Buildx (build)
                 run: |
-                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args }}
+                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_latest }}
+                    docker buildx build --output "type=image,push=false" ${{ steps.prepare.outputs.buildx_args_minor }}
             -   name: Login to DockerHub
                 if: success()
                 uses: docker/login-action@v1
