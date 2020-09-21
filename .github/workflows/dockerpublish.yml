@@ -69,6 +69,6 @@ jobs:
             -   name: Inspect image
                 if: success()
                 run: |
-                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version_latest }}
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:latest-${{ steps.prepare.outputs.version_latest }}
                     docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version_major }}
                     docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version_minor }}
