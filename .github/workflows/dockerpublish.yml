@@ -20,7 +20,7 @@ jobs:
                 env:
                     PHP_VERSION: ${{ matrix.php_version }}
                 run: |
-                    DOCKER_IMAGE=helldar/laradock-workspace
+                    DOCKER_IMAGE=laraberries/workspace
                     DOCKER_PLATFORMS=linux/amd64,linux/arm,linux/arm64
                     VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:2:1}
                     PREFIX=edge-
@@ -51,7 +51,7 @@ jobs:
                 run: |
                     docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.prefix }}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
             -   name: Docker Buildx (build major)
-                if: success() && ${{ steps.prepare.outputs.prefix }} == "latest-"
+                if: success() && github.tag != ''
                 run: |
                     docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_major }}
             -   name: Login to DockerHub
@@ -65,7 +65,7 @@ jobs:
                 run: |
                     docker buildx build --output "type=image,push=true,name=${{ steps.prepare.outputs.prefix }}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
             -   name: Docker Buildx (push major)
-                if: success() && ${{ steps.prepare.outputs.prefix }} == "latest-"
+                if: success() && github.tag != ''
                 run: |
                     docker buildx build --output "type=image,push=true,name=${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_major }}
             -   name: Inspect latest image
@@ -73,6 +73,6 @@ jobs:
                 run: |
                     docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.prefix }}${{ steps.prepare.outputs.version }}
             -   name: Inspect major image
-                if: success() && ${{ steps.prepare.outputs.prefix }} == "latest-"
+                if: success() && github.tag != ''
                 run: |
                     docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
