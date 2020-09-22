@@ -6,8 +6,8 @@
 
 ARG PHP_VERSION=7.4.0
 
-FROM phusion/baseimage:bionic-1.0.0
 FROM php:${PHP_VERSION}-alpine
+FROM phusion/baseimage:bionic-1.0.0
 
 LABEL maintainer="Mahmoud Zalt <mahmoud@zalt.me>"
 
