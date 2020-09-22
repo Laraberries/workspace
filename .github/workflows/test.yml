@@ -20,7 +20,7 @@ jobs:
 
                     if [[ $GITHUB_REF == refs/tags/* ]]; then
                         PREFIX=latest-
-                        TAG=${{ github.tag }}
+                        TAG=${GITHUB_REF/refs\/tags\//}
                     fi
 
                     echo "PREFIX=${PREFIX}"
