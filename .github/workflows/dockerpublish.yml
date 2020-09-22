@@ -60,7 +60,7 @@ jobs:
                 with:
                     username: ${{ secrets.DOCKER_HUB_USER }}
                     password: ${{ secrets.DOCKER_HUB_PASSWORD }}
-            -   name: Docker Buildx (push)
+            -   name: Docker Buildx (push latest)
                 if: success()
                 run: |
                     docker buildx build --output "type=image,push=true,name=${{ steps.prepare.outputs.prefix }}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
