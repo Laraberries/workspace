@@ -23,38 +23,37 @@ jobs:
                     DOCKER_IMAGE=helldar/laradock-workspace
                     DOCKER_PLATFORMS=linux/amd64,linux/arm,linux/arm64
                     VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:2:1}
-                    PREFIX_LATEST=edge-
-                    PREFIX_MAJOR=edge-
+                    PREFIX=edge-
 
                     if [[ $GITHUB_REF == refs/tags/* ]]; then
-                        PREFIX_LATEST=latest-
-                        PREFIX_MAJOR=""
+                        PREFIX=latest-
                     fi
 
                     echo ::set-output name=docker_image::${DOCKER_IMAGE}
                     echo ::set-output name=version::${VERSION}
+                    echo ::set-output name=prefix::${PREFIX}
 
                     echo ::set-output name=buildx_args_latest::--platform ${DOCKER_PLATFORMS} \
-                        --build-arg VERSION=${PREFIX_LATEST}${VERSION} \
+                        --build-arg VERSION=${PREFIX}${VERSION} \
                         --build-arg PHP_VERSION=${VERSION} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        --tag "${DOCKER_IMAGE}:${PREFIX_LATEST}${VERSION}" .
+                        --tag "${DOCKER_IMAGE}:${PREFIX}${VERSION}" .
                     echo ::set-output name=buildx_args_major::--platform ${DOCKER_PLATFORMS} \
-                        --build-arg VERSION=${PREFIX_MAJOR}${VERSION} \
+                        --build-arg VERSION=${VERSION} \
                         --build-arg PHP_VERSION=${VERSION} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        --tag "${DOCKER_IMAGE}:${PREFIX_MAJOR}${VERSION}" .
+                        --tag "${DOCKER_IMAGE}:${VERSION}" .
             -   name: Set up Docker Buildx
                 uses: crazy-max/ghaction-docker-buildx@v3
             -   name: Docker Buildx (build latest)
                 run: |
-                    docker buildx build --output "type=image,push=false,name=${PREFIX_LATEST}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
+                    docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.prefix }}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
             -   name: Docker Buildx (build major)
-                if: success() && $GITHUB_REF == refs/tags/*
+                if: success() && ${{ steps.prepare.outputs.prefix }} == "latest-"
                 run: |
-                    docker buildx build --output "type=image,push=false,name=${PREFIX_MAJOR}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_major }}
+                    docker buildx build --output "type=image,push=false,name=${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_major }}
             -   name: Login to DockerHub
                 if: success()
                 uses: docker/login-action@v1
@@ -64,16 +63,16 @@ jobs:
             -   name: Docker Buildx (push)
                 if: success()
                 run: |
-                    docker buildx build --output "type=image,push=true,name=${PREFIX_LATEST}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
+                    docker buildx build --output "type=image,push=true,name=${{ steps.prepare.outputs.prefix }}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
             -   name: Docker Buildx (push major)
-                if: success() && $GITHUB_REF == refs/tags/*
+                if: success() && ${{ steps.prepare.outputs.prefix }} == "latest-"
                 run: |
-                    docker buildx build --output "type=image,push=true,name=${PREFIX_MAJOR}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_major }}
+                    docker buildx build --output "type=image,push=true,name=${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_major }}
             -   name: Inspect latest image
                 if: success()
                 run: |
-                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${PREFIX_LATEST}${{ steps.prepare.outputs.version }}
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.prefix }}${{ steps.prepare.outputs.version }}
             -   name: Inspect major image
-                if: success() && $GITHUB_REF == refs/tags/*
+                if: success() && ${{ steps.prepare.outputs.prefix }} == "latest-"
                 run: |
-                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${PREFIX_MAJOR}${{ steps.prepare.outputs.version }}
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}
