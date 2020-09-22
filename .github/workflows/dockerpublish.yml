@@ -23,7 +23,7 @@ jobs:
 
                     if [[ $GITHUB_REF == refs/tags/* ]]; then
                         PREFIX=latest-
-                        TAG=${GITHUB_REF/refs\/tags\//}
+                        TAG=${GITHUB_REF/refs\/tags\/v}
                     fi
 
                     echo ::set-output name=prefix::${PREFIX}
