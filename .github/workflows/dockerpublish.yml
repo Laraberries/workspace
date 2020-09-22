@@ -22,38 +22,39 @@ jobs:
                 run: |
                     DOCKER_IMAGE=helldar/laradock-workspace
                     DOCKER_PLATFORMS=linux/amd64,linux/arm,linux/arm64
-                    VERSION_LATEST=${PHP_VERSION:0:1}.${PHP_VERSION:2:1}
-                    VERSION_MAJOR=${PHP_VERSION:0:1}.${PHP_VERSION:2:1}
-                    VERSION_LATEST_PREFIX=edge-
-                    VERSION_MAJOR_PREFIX=edge-
+                    VERSION=${PHP_VERSION:0:1}.${PHP_VERSION:2:1}
+                    PREFIX_LATEST=edge-
+                    PREFIX_MAJOR=edge-
 
                     if [[ $GITHUB_REF == refs/tags/* ]]; then
-                        VERSION_LATEST_PREFIX=latest-
-                        VERSION_MAJOR_PREFIX=""
+                        PREFIX_LATEST=latest-
+                        PREFIX_MAJOR=""
                     fi
 
                     echo ::set-output name=docker_image::${DOCKER_IMAGE}
-                    echo ::set-output name=version_latest::${VERSION_LATEST}
-                    echo ::set-output name=version_major::${VERSION_MAJOR}
+                    echo ::set-output name=version::${VERSION}
 
                     echo ::set-output name=buildx_args_latest::--platform ${DOCKER_PLATFORMS} \
-                        --build-arg VERSION=${VERSION_LATEST_PREFIX}${VERSION_LATEST} \
-                        --build-arg PHP_VERSION=${VERSION_LATEST} \
+                        --build-arg VERSION=${PREFIX_LATEST}${VERSION} \
+                        --build-arg PHP_VERSION=${VERSION} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        --tag "${DOCKER_IMAGE}:${VERSION_LATEST_PREFIX}${VERSION_LATEST}" .
+                        --tag "${DOCKER_IMAGE}:${PREFIX_LATEST}${VERSION}" .
                     echo ::set-output name=buildx_args_major::--platform ${DOCKER_PLATFORMS} \
-                        --build-arg VERSION=${VERSION_MAJOR_PREFIX}${VERSION_MAJOR} \
-                        --build-arg PHP_VERSION=${VERSION_MAJOR} \
+                        --build-arg VERSION=${PREFIX_MAJOR}${VERSION} \
+                        --build-arg PHP_VERSION=${VERSION} \
                         --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
-                        --tag "${DOCKER_IMAGE}:${VERSION_MAJOR_PREFIX}${VERSION_MAJOR}" .
+                        --tag "${DOCKER_IMAGE}:${PREFIX_MAJOR}${VERSION}" .
             -   name: Set up Docker Buildx
                 uses: crazy-max/ghaction-docker-buildx@v3
-            -   name: Docker Buildx (build)
+            -   name: Docker Buildx (build latest)
                 run: |
-                    docker buildx build --output "type=image,push=false,name=${VERSION_LATEST_PREFIX}${{ steps.prepare.outputs.version_latest }}" ${{ steps.prepare.outputs.buildx_args_latest }}
-                    docker buildx build --output "type=image,push=false,name=${VERSION_MAJOR_PREFIX}${{ steps.prepare.outputs.version_major }}" ${{ steps.prepare.outputs.buildx_args_major }}
+                    docker buildx build --output "type=image,push=false,name=${PREFIX_LATEST}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
+            -   name: Docker Buildx (build major)
+                if: success() && $GITHUB_REF == refs/tags/*
+                run: |
+                    docker buildx build --output "type=image,push=false,name=${PREFIX_MAJOR}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_major }}
             -   name: Login to DockerHub
                 if: success()
                 uses: docker/login-action@v1
@@ -63,10 +64,16 @@ jobs:
             -   name: Docker Buildx (push)
                 if: success()
                 run: |
-                    docker buildx build --output "type=image,push=true,name=${VERSION_LATEST_PREFIX}${{ steps.prepare.outputs.version_latest }}" ${{ steps.prepare.outputs.buildx_args_latest }}
-                    docker buildx build --output "type=image,push=true,name=${VERSION_MAJOR_PREFIX}${{ steps.prepare.outputs.version_major }}" ${{ steps.prepare.outputs.buildx_args_major }}
-            -   name: Inspect image
+                    docker buildx build --output "type=image,push=true,name=${PREFIX_LATEST}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_latest }}
+            -   name: Docker Buildx (push major)
+                if: success() && $GITHUB_REF == refs/tags/*
+                run: |
+                    docker buildx build --output "type=image,push=true,name=${PREFIX_MAJOR}${{ steps.prepare.outputs.version }}" ${{ steps.prepare.outputs.buildx_args_major }}
+            -   name: Inspect latest image
                 if: success()
                 run: |
-                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${VERSION_LATEST_PREFIX}${{ steps.prepare.outputs.version_latest }}
-                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${VERSION_MAJOR_PREFIX}${{ steps.prepare.outputs.version_major }}
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${PREFIX_LATEST}${{ steps.prepare.outputs.version }}
+            -   name: Inspect major image
+                if: success() && $GITHUB_REF == refs/tags/*
+                run: |
+                    docker buildx imagetools inspect ${{ steps.prepare.outputs.docker_image }}:${PREFIX_MAJOR}${{ steps.prepare.outputs.version }}
