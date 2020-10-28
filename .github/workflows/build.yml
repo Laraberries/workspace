@@ -52,6 +52,7 @@ jobs:
                         PREFIX=latest
                     fi
 
+                    echo ::set-output name=platforms::${PLATFORMS}
                     echo ::set-output name=prefix::${PREFIX}
                     echo ::set-output name=suffix::${SUFFIX}
                     echo ::set-output name=minor_version::${VERSION:0:3}
@@ -72,7 +73,7 @@ jobs:
                     echo ::set-output name=minor_version::${MINOR_VERSION}
                     echo ::set-output name=patch_version::${PATCH_VERSION}
 
-                    echo ::set-output name=buildx_args_latest::--platform ${PLATFORMS} \
+                    echo ::set-output name=buildx_args_latest::--platform ${{ steps.get_version.outputs.platforms }} \
                         --build-arg VERSION=${{ steps.get_version.outputs.prefix }} \
                         --build-arg MINOR_PHP_VERSION=latest \
                         --build-arg FULL_PHP_VERSION=latest \
@@ -80,7 +81,7 @@ jobs:
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
                         --tag "${DOCKER_IMAGE}:${{ steps.get_version.outputs.prefix }}" .
 
-                    echo ::set-output name=buildx_args_minor::--platform ${PLATFORMS} \
+                    echo ::set-output name=buildx_args_minor::--platform ${{ steps.get_version.outputs.platforms }} \
                         --build-arg VERSION=${{ steps.get_version.outputs.prefix }}-${MINOR_VERSION} \
                         --build-arg MINOR_PHP_VERSION=${MINOR_VERSION} \
                         --build-arg FULL_PHP_VERSION=${MINOR_VERSION}${{ steps.get_version.outputs.suffix }} \
@@ -88,7 +89,7 @@ jobs:
                         --build-arg VCS_REF=${GITHUB_SHA::8} \
                         --tag "${DOCKER_IMAGE}:${{ steps.get_version.outputs.prefix }}-${MINOR_VERSION}" .
 
-                    echo ::set-output name=buildx_args_patch::--platform ${PLATFORMS} \
+                    echo ::set-output name=buildx_args_patch::--platform ${{ steps.get_version.outputs.platforms }} \
                         --build-arg VERSION=${{ steps.get_version.outputs.prefix }}-${PATCH_VERSION} \
                         --build-arg MINOR_PHP_VERSION=${MINOR_VERSION} \
                         --build-arg FULL_PHP_VERSION=${PATCH_VERSION}${{ steps.get_version.outputs.suffix }} \
