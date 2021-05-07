@@ -1,6 +1,6 @@
 # Laradock's ARM Workspace Base Image
 
-![Docker Build](https://github.com/Laraberries/workspace/workflows/Docker%20Build/badge.svg)
+[![Docker Build](https://github.com/Laraberries/workspace/actions/workflows/build.yml/badge.svg)](https://github.com/Laraberries/workspace/actions/workflows/build.yml)
 
 [Workspace Docker Hub Repository](https://hub.docker.com/r/laraberries/workspace)
 
